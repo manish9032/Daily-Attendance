@@ -1,0 +1,202 @@
+@import "tailwindcss";
+
+/* Type scale: a calmer, more readable ramp than Tailwind's defaults
+   (small text was 12px, which is hard to read on a phone). */
+@theme {
+  --font-sans: 'DM Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  --text-xs: 0.8125rem;
+  --text-xs--line-height: 1.25rem;
+  --text-sm: 0.9375rem;
+  --text-sm--line-height: 1.5rem;
+  --text-base: 1rem;
+  --text-base--line-height: 1.625rem;
+  --text-lg: 1.125rem;
+  --text-lg--line-height: 1.75rem;
+  --text-xl: 1.3125rem;
+  --text-xl--line-height: 1.875rem;
+  --text-2xl: 1.625rem;
+  --text-2xl--line-height: 2.125rem;
+  --text-3xl: 2rem;
+  --text-3xl--line-height: 2.5rem;
+}
+
+@layer base {
+  :root {
+    --background: #F8FAF7;
+    --foreground: #111C18;
+    --card: #FFFFFF;
+    --border: #E2E8E0;
+    --muted: #52635B;
+    --primary: #16A34A;
+    --accent: #D97706;
+    --danger: #DC2626;
+  }
+
+  html {
+    font-size: 16px;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    font-family: 'DM Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+    font-size: 1rem;
+    line-height: 1.6;
+    background-color: var(--background);
+    color: var(--foreground);
+    margin: 0;
+    padding: 0;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  h1, h2, h3, h4, .font-display {
+    font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+  }
+
+  h1 { font-weight: 800; }
+  h2, h3 { font-weight: 700; }
+
+  p, li {
+    text-wrap: pretty;
+  }
+
+  /* Numbers line up in columns, without switching to a monospace face. */
+  .font-mono-tabular {
+    font-family: inherit;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0;
+  }
+
+  /* Visible keyboard focus everywhere. */
+  :focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+/* Official Google Sign-In Material Button Styling */
+.gsi-material-button {
+  -moz-user-select: none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
+  -webkit-appearance: none;
+  background-color: #ffffff;
+  background-image: none;
+  border: 1px solid #747775;
+  -webkit-border-radius: 12px;
+  border-radius: 12px;
+  -webkit-box-sizing: border-box;
+  box-sizing: border-box;
+  color: #1f1f1f;
+  cursor: pointer;
+  font-family: 'DM Sans', 'Roboto', arial, sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  height: 48px;
+  letter-spacing: 0.15px;
+  outline: none;
+  overflow: hidden;
+  padding: 0 20px;
+  position: relative;
+  text-align: center;
+  -webkit-transition: background-color .18s, border-color .18s, box-shadow .18s;
+  transition: background-color .18s, border-color .18s, box-shadow .18s;
+  vertical-align: middle;
+  white-space: nowrap;
+  width: 100%;
+  max-width: 360px;
+}
+
+.gsi-material-button .gsi-material-button-icon {
+  height: 20px;
+  margin-right: 12px;
+  min-width: 20px;
+  width: 20px;
+}
+
+.gsi-material-button .gsi-material-button-content-wrapper {
+  -webkit-align-items: center;
+  align-items: center;
+  display: flex;
+  -webkit-flex-direction: row;
+  flex-direction: row;
+  -webkit-flex-wrap: nowrap;
+  flex-wrap: nowrap;
+  height: 100%;
+  justify-content: center;
+  position: relative;
+  width: 100%;
+}
+
+.gsi-material-button .gsi-material-button-contents {
+  -webkit-flex-grow: 0;
+  flex-grow: 0;
+  font-family: 'DM Sans', 'Roboto', arial, sans-serif;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: top;
+}
+
+.gsi-material-button .gsi-material-button-state {
+  -webkit-transition: opacity .18s;
+  transition: opacity .18s;
+  bottom: 0;
+  left: 0;
+  opacity: 0;
+  position: absolute;
+  right: 0;
+  top: 0;
+}
+
+.gsi-material-button:disabled {
+  cursor: default;
+  background-color: #ffffff61;
+  border-color: #1f1f1f1f;
+}
+
+.gsi-material-button:not(:disabled):hover {
+  -webkit-box-shadow: 0 1px 3px 0 rgba(60, 64, 67, .2), 0 2px 6px 2px rgba(60, 64, 67, .1);
+  box-shadow: 0 1px 3px 0 rgba(60, 64, 67, .2), 0 2px 6px 2px rgba(60, 64, 67, .1);
+  background-color: #f8faf8;
+}
+
+@keyframes waterDropFall {
+  0% {
+    transform: translateY(-12px) scale(0.8);
+    opacity: 0;
+  }
+  30% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(58px) scale(1);
+    opacity: 0;
+  }
+}
+
+.animate-water-drop-1 {
+  animation: waterDropFall 0.9s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+
+.animate-water-drop-2 {
+  animation: waterDropFall 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.25s infinite;
+}
+
+.animate-water-drop-3 {
+  animation: waterDropFall 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.5s infinite;
+}
