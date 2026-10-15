@@ -1,0 +1,6 @@
+{
+  "name": "Daily Attendance — Student Habit & Locker",
+  "description": "Gamified student attendance tracker with live selfie face verification, virtual plant growth streaks, smart board-exam alarms, and a <200KB Google Drive document locker.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

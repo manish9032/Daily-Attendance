@@ -1,0 +1,346 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Pillar 1: Global Default-Deny Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Primitive Helpers
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedUser() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isVerifiedOwner(userId) {
+      return isVerifiedUser() && request.auth.uid == userId;
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isValidDateString(d) {
+      return d is string && d.size() == 10 && d.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$');
+    }
+
+    // Master Gate: Verify parent user document exists and belongs to the authenticated user
+    function hasValidParentUser(userId) {
+      return exists(/databases/$(database)/documents/users/$(userId)) &&
+        get(/databases/$(database)/documents/users/$(userId)).data.uid == request.auth.uid;
+    }
+
+    // Entity Validation Blueprint: UserProfile
+    function isValidUserProfile(data, userId) {
+      return data.keys().hasAll([
+        'uid',
+        'displayName',
+        'studentClass',
+        'boardExamDate',
+        'parentConsentConfirmed',
+        'currentStreak',
+        'bestStreak',
+        'lastAttendanceDate',
+        'plantCycleDay',
+        'currentFlowerType',
+        'plantHealth',
+        'consecutiveMissedDays',
+        'earnedBadges',
+        'onboardingCompleted',
+        'createdAt',
+        'updatedAt'
+      ]) &&
+      data.keys().hasOnly([
+        'uid',
+        'displayName',
+        'studentClass',
+        'boardExamDate',
+        'parentConsentConfirmed',
+        'currentStreak',
+        'bestStreak',
+        'lastAttendanceDate',
+        'plantCycleDay',
+        'currentFlowerType',
+        'plantHealth',
+        'consecutiveMissedDays',
+        'earnedBadges',
+        'onboardingCompleted',
+        'createdAt',
+        'updatedAt'
+      ]) &&
+      data.uid is string && data.uid.size() >= 1 && data.uid.size() <= 128 &&
+      data.uid == request.auth.uid && data.uid == userId &&
+      data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 80 &&
+      data.studentClass is string && data.studentClass.size() <= 30 &&
+      data.studentClass in ['Class 9', 'Class 10', 'Class 11', 'Class 12', 'College', 'Dropper / Entrance'] &&
+      isValidDateString(data.boardExamDate) &&
+      data.parentConsentConfirmed is bool &&
+      data.currentStreak is int && data.currentStreak >= 0 && data.currentStreak <= 10000 &&
+      data.bestStreak is int && data.bestStreak >= 0 && data.bestStreak <= 10000 &&
+      data.lastAttendanceDate is string && data.lastAttendanceDate.size() <= 10 &&
+      (data.lastAttendanceDate.size() == 0 || isValidDateString(data.lastAttendanceDate)) &&
+      data.plantCycleDay is int && data.plantCycleDay >= 0 && data.plantCycleDay <= 30 &&
+      data.currentFlowerType is string && data.currentFlowerType.size() <= 20 &&
+      data.currentFlowerType in ['Sunflower', 'Rose', 'Lotus', 'Orchid'] &&
+      data.plantHealth is string && data.plantHealth.size() <= 16 &&
+      data.plantHealth in ['healthy', 'wilted'] &&
+      data.consecutiveMissedDays is int && data.consecutiveMissedDays >= 0 && data.consecutiveMissedDays <= 365 &&
+      data.earnedBadges is list && data.earnedBadges.size() <= 50 &&
+      (data.earnedBadges.size() == 0 || (data.earnedBadges[0] is string && data.earnedBadges[0].size() <= 60)) &&
+      data.onboardingCompleted is bool &&
+      data.createdAt is timestamp &&
+      data.updatedAt is timestamp;
+    }
+
+    // Entity Validation Blueprint: AttendanceRecord
+    function isValidAttendanceRecord(data, userId, dateId) {
+      return data.keys().hasAll([
+        'dateId',
+        'userId',
+        'status',
+        'verifiedFace',
+        'networkTimestamp',
+        'selfieDisposition',
+        'streakAtMark',
+        'plantStageAtMark',
+        'createdAt'
+      ]) &&
+      data.keys().hasOnly([
+        'dateId',
+        'userId',
+        'status',
+        'verifiedFace',
+        'networkTimestamp',
+        'selfieDisposition',
+        'streakAtMark',
+        'plantStageAtMark',
+        'createdAt'
+      ]) &&
+      isValidDateString(data.dateId) &&
+      data.dateId == dateId &&
+      data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+      data.userId == request.auth.uid && data.userId == userId &&
+      data.status is string && data.status.size() <= 16 &&
+      data.status == 'present' &&
+      data.verifiedFace is bool && data.verifiedFace == true &&
+      data.networkTimestamp is string && data.networkTimestamp.size() >= 10 && data.networkTimestamp.size() <= 40 &&
+      data.selfieDisposition is string && data.selfieDisposition.size() <= 30 &&
+      data.selfieDisposition == 'verified_and_discarded' &&
+      data.streakAtMark is int && data.streakAtMark >= 1 && data.streakAtMark <= 10000 &&
+      data.plantStageAtMark is string && data.plantStageAtMark.size() <= 20 &&
+      data.plantStageAtMark in ['Seed', 'Sprout', 'Sapling', 'Bud', 'Full Bloom'] &&
+      data.createdAt is timestamp;
+    }
+
+    // Entity Validation Blueprint: TaskItem
+    function isValidTaskItem(data, userId, taskId) {
+      return data.keys().hasAll([
+        'taskId',
+        'userId',
+        'title',
+        'notes',
+        'dueDate',
+        'dueTime',
+        'category',
+        'completed',
+        'alarmEnabled',
+        'snoozedUntil',
+        'createdAt',
+        'updatedAt'
+      ]) &&
+      data.keys().hasOnly([
+        'taskId',
+        'userId',
+        'title',
+        'notes',
+        'dueDate',
+        'dueTime',
+        'category',
+        'completed',
+        'alarmEnabled',
+        'snoozedUntil',
+        'createdAt',
+        'updatedAt'
+      ]) &&
+      isValidId(data.taskId) && data.taskId == taskId &&
+      data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+      data.userId == request.auth.uid && data.userId == userId &&
+      data.title is string && data.title.size() >= 1 && data.title.size() <= 140 &&
+      data.notes is string && data.notes.size() <= 500 &&
+      isValidDateString(data.dueDate) &&
+      data.dueTime is string && data.dueTime.size() == 5 && data.dueTime.matches('^[0-9]{2}:[0-9]{2}$') &&
+      data.category is string && data.category.size() <= 20 &&
+      data.category in ['homework', 'submission', 'board_exam'] &&
+      data.completed is bool &&
+      data.alarmEnabled is bool &&
+      data.snoozedUntil is string && data.snoozedUntil.size() <= 40 &&
+      data.createdAt is timestamp &&
+      data.updatedAt is timestamp;
+    }
+
+    // Entity Validation Blueprint: HolidayItem
+    function isValidHolidayItem(data, userId, dateId) {
+      return data.keys().hasAll([
+        'dateId',
+        'userId',
+        'label',
+        'createdAt'
+      ]) &&
+      data.keys().hasOnly([
+        'dateId',
+        'userId',
+        'label',
+        'createdAt'
+      ]) &&
+      isValidDateString(data.dateId) && data.dateId == dateId &&
+      data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+      data.userId == request.auth.uid && data.userId == userId &&
+      data.label is string && data.label.size() >= 1 && data.label.size() <= 80 &&
+      data.createdAt is timestamp;
+    }
+
+    // Collection 1: /users/{userId}
+    match /users/{userId} {
+      allow get: if isOwner(userId) && isValidId(userId);
+      allow list: if false;
+
+      // Clients may only create a CLEAN profile. Streak / plant / badge fields are
+      // owned by the server (Admin SDK via /api/attendance/mark), so a student
+      // cannot start with currentStreak: 9999 or pre-earned badges.
+      allow create: if isVerifiedOwner(userId) &&
+        isValidId(userId) &&
+        isValidUserProfile(incoming(), userId) &&
+        incoming().currentStreak == 0 &&
+        incoming().bestStreak == 0 &&
+        incoming().lastAttendanceDate == '' &&
+        incoming().plantCycleDay == 0 &&
+        incoming().currentFlowerType == 'Sunflower' &&
+        incoming().plantHealth == 'healthy' &&
+        incoming().consecutiveMissedDays == 0 &&
+        incoming().earnedBadges.size() == 0 &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time;
+
+      allow update: if isVerifiedOwner(userId) &&
+        isValidId(userId) &&
+        isValidUserProfile(incoming(), userId) &&
+        incoming().uid == existing().uid &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time &&
+        // Clients may ONLY change profile settings. Streak, plant, badge and
+        // attendance fields can no longer be written from the browser.
+        incoming().diff(existing()).affectedKeys().hasOnly([
+          'displayName',
+          'studentClass',
+          'boardExamDate',
+          'parentConsentConfirmed',
+          'onboardingCompleted',
+          'updatedAt'
+        ]);
+
+      allow delete: if isVerifiedOwner(userId) && isValidId(userId);
+
+      // Subcollection 1: /users/{userId}/attendance/{dateId}
+      // Strictly Read-Only History after creation (no update or delete allowed)
+      match /attendance/{dateId} {
+        allow get: if isOwner(userId) && isValidId(userId) && isValidDateString(dateId);
+        allow list: if isOwner(userId) && resource.data.userId == request.auth.uid;
+
+        // SERVER-ONLY: attendance records are created by the Express server using the
+        // Admin SDK (server/secureAttendance.ts) after face + school-day verification.
+        // Clients can read their history but never write it.
+        allow create: if false;
+
+        allow update: if false;
+        allow delete: if false;
+      }
+
+      // Subcollection 2: /users/{userId}/tasks/{taskId}
+      match /tasks/{taskId} {
+        allow get: if isOwner(userId) && isValidId(userId) && isValidId(taskId) && resource.data.userId == request.auth.uid;
+        allow list: if isOwner(userId) && resource.data.userId == request.auth.uid;
+
+        allow create: if isVerifiedOwner(userId) &&
+          isValidId(userId) &&
+          isValidId(taskId) &&
+          isValidTaskItem(incoming(), userId, taskId) &&
+          incoming().createdAt == request.time &&
+          incoming().updatedAt == request.time &&
+          hasValidParentUser(userId);
+
+        allow update: if isVerifiedOwner(userId) &&
+          isValidId(userId) &&
+          isValidId(taskId) &&
+          isValidTaskItem(incoming(), userId, taskId) &&
+          incoming().userId == existing().userId &&
+          incoming().taskId == existing().taskId &&
+          incoming().createdAt == existing().createdAt &&
+          incoming().updatedAt == request.time &&
+          hasValidParentUser(userId) &&
+          (
+            // Action 1: Toggle Completion or Snooze Alarm
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'completed',
+              'snoozedUntil',
+              'updatedAt'
+            ]) ||
+            // Action 2: Edit Task Details
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'title',
+              'notes',
+              'dueDate',
+              'dueTime',
+              'category',
+              'completed',
+              'alarmEnabled',
+              'snoozedUntil',
+              'updatedAt'
+            ])
+          );
+
+        allow delete: if isVerifiedOwner(userId) &&
+          isValidId(userId) &&
+          isValidId(taskId) &&
+          resource.data.userId == request.auth.uid &&
+          hasValidParentUser(userId);
+      }
+
+      // Subcollection 3: /users/{userId}/holidays/{dateId}
+      match /holidays/{dateId} {
+        allow get: if isOwner(userId) && isValidId(userId) && isValidDateString(dateId) && resource.data.userId == request.auth.uid;
+        allow list: if isOwner(userId) && resource.data.userId == request.auth.uid;
+
+        allow create: if isVerifiedOwner(userId) &&
+          isValidId(userId) &&
+          isValidDateString(dateId) &&
+          isValidHolidayItem(incoming(), userId, dateId) &&
+          incoming().createdAt == request.time &&
+          hasValidParentUser(userId);
+
+        allow update: if false;
+
+        allow delete: if isVerifiedOwner(userId) &&
+          isValidId(userId) &&
+          isValidDateString(dateId) &&
+          resource.data.userId == request.auth.uid &&
+          hasValidParentUser(userId);
+      }
+    }
+  }
+}

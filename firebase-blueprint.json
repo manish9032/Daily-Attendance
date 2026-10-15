@@ -1,0 +1,320 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Student profile, virtual plant growth state, streak metrics, and earned cycle badges.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Authenticated user UID matching request.auth.uid",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Student full name",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "studentClass": {
+          "type": "string",
+          "description": "Student grade or class level",
+          "enum": ["Class 9", "Class 10", "Class 11", "Class 12", "College"]
+        },
+        "boardExamDate": {
+          "type": "string",
+          "description": "Target board exam start date in YYYY-MM-DD format",
+          "minLength": 10,
+          "maxLength": 10,
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+        },
+        "parentConsentConfirmed": {
+          "type": "boolean",
+          "description": "Confirms parent or guardian consent for student habit tracking"
+        },
+        "currentStreak": {
+          "type": "number",
+          "description": "Current active daily attendance streak count"
+        },
+        "bestStreak": {
+          "type": "number",
+          "description": "All-time highest attendance streak count"
+        },
+        "lastAttendanceDate": {
+          "type": "string",
+          "description": "Last network-verified attendance date in YYYY-MM-DD format or empty string",
+          "minLength": 0,
+          "maxLength": 10
+        },
+        "plantCycleDay": {
+          "type": "number",
+          "description": "Current progress day within the 30-day botanical cycle (0 to 30)"
+        },
+        "currentFlowerType": {
+          "type": "string",
+          "description": "Current flower species being grown in the 30-day cycle",
+          "enum": ["Sunflower", "Rose", "Lotus", "Orchid"]
+        },
+        "plantHealth": {
+          "type": "string",
+          "description": "Current health state of the virtual plant",
+          "enum": ["healthy", "wilted"]
+        },
+        "consecutiveMissedDays": {
+          "type": "number",
+          "description": "Number of consecutive missed school days"
+        },
+        "earnedBadges": {
+          "type": "array",
+          "description": "Bounded list of earned 30-day cycle flower badges (max 50)"
+        },
+        "onboardingCompleted": {
+          "type": "boolean",
+          "description": "Whether the student finished first-launch setup"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server creation timestamp"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server update timestamp"
+        }
+      },
+      "required": [
+        "uid",
+        "displayName",
+        "studentClass",
+        "boardExamDate",
+        "parentConsentConfirmed",
+        "currentStreak",
+        "bestStreak",
+        "lastAttendanceDate",
+        "plantCycleDay",
+        "currentFlowerType",
+        "plantHealth",
+        "consecutiveMissedDays",
+        "earnedBadges",
+        "onboardingCompleted",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "AttendanceRecord": {
+      "title": "AttendanceRecord",
+      "description": "Immutable daily attendance record verified with live front-camera face detection and trusted network time.",
+      "type": "object",
+      "properties": {
+        "dateId": {
+          "type": "string",
+          "description": "Trusted network date in YYYY-MM-DD format",
+          "minLength": 10,
+          "maxLength": 10,
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+        },
+        "userId": {
+          "type": "string",
+          "description": "Owner UID matching parent user document",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "status": {
+          "type": "string",
+          "description": "Attendance status for the recorded day",
+          "enum": ["present"]
+        },
+        "verifiedFace": {
+          "type": "boolean",
+          "description": "True when live front-camera face verification succeeded before photo discard"
+        },
+        "networkTimestamp": {
+          "type": "string",
+          "description": "Trusted server ISO timestamp at capture time",
+          "minLength": 10,
+          "maxLength": 40
+        },
+        "selfieDisposition": {
+          "type": "string",
+          "description": "Privacy record confirming live selfie was verified and immediately discarded",
+          "enum": ["verified_and_discarded"]
+        },
+        "streakAtMark": {
+          "type": "number",
+          "description": "Student streak count after marking this attendance"
+        },
+        "plantStageAtMark": {
+          "type": "string",
+          "description": "Plant stage reached on this attendance mark",
+          "enum": ["Seed", "Sprout", "Sapling", "Bud", "Full Bloom"]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server creation timestamp"
+        }
+      },
+      "required": [
+        "dateId",
+        "userId",
+        "status",
+        "verifiedFace",
+        "networkTimestamp",
+        "selfieDisposition",
+        "streakAtMark",
+        "plantStageAtMark",
+        "createdAt"
+      ]
+    },
+    "TaskItem": {
+      "title": "TaskItem",
+      "description": "Smart To-Do task or Board Exam countdown with local alarm scheduling.",
+      "type": "object",
+      "properties": {
+        "taskId": {
+          "type": "string",
+          "description": "Unique task identifier",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "userId": {
+          "type": "string",
+          "description": "Owner UID matching parent user document",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "title": {
+          "type": "string",
+          "description": "Task or exam subject title",
+          "minLength": 1,
+          "maxLength": 140
+        },
+        "notes": {
+          "type": "string",
+          "description": "Optional study notes or submission instructions",
+          "minLength": 0,
+          "maxLength": 500
+        },
+        "dueDate": {
+          "type": "string",
+          "description": "Deadline date in YYYY-MM-DD format",
+          "minLength": 10,
+          "maxLength": 10,
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+        },
+        "dueTime": {
+          "type": "string",
+          "description": "Deadline time in HH:mm 24-hour format",
+          "minLength": 5,
+          "maxLength": 5,
+          "pattern": "^[0-9]{2}:[0-9]{2}$"
+        },
+        "category": {
+          "type": "string",
+          "description": "Task category including board-exam countdown mode",
+          "enum": ["homework", "submission", "board_exam"]
+        },
+        "completed": {
+          "type": "boolean",
+          "description": "Whether the student completed the task"
+        },
+        "alarmEnabled": {
+          "type": "boolean",
+          "description": "Whether local alarm notification is enabled"
+        },
+        "snoozedUntil": {
+          "type": "string",
+          "description": "ISO timestamp if alarm is currently snoozed, or empty string",
+          "minLength": 0,
+          "maxLength": 40
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server creation timestamp"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server update timestamp"
+        }
+      },
+      "required": [
+        "taskId",
+        "userId",
+        "title",
+        "notes",
+        "dueDate",
+        "dueTime",
+        "category",
+        "completed",
+        "alarmEnabled",
+        "snoozedUntil",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "HolidayItem": {
+      "title": "HolidayItem",
+      "description": "Student-configured custom school holiday excluded from streak-break penalties.",
+      "type": "object",
+      "properties": {
+        "dateId": {
+          "type": "string",
+          "description": "Holiday date in YYYY-MM-DD format",
+          "minLength": 10,
+          "maxLength": 10,
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+        },
+        "userId": {
+          "type": "string",
+          "description": "Owner UID matching parent user document",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "label": {
+          "type": "string",
+          "description": "Holiday name (e.g., Diwali Break, Sports Day)",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server creation timestamp"
+        }
+      },
+      "required": [
+        "dateId",
+        "userId",
+        "label",
+        "createdAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Root user profile document storing streak, virtual plant cycle state, and earned badges."
+    },
+    "/users/{userId}/attendance/{dateId}": {
+      "schema": { "$ref": "#/entities/AttendanceRecord" },
+      "description": "Immutable daily attendance records keyed by YYYY-MM-DD dateId."
+    },
+    "/users/{userId}/tasks/{taskId}": {
+      "schema": { "$ref": "#/entities/TaskItem" },
+      "description": "Student tasks and board exam countdowns with alarm metadata."
+    },
+    "/users/{userId}/holidays/{dateId}": {
+      "schema": { "$ref": "#/entities/HolidayItem" },
+      "description": "Custom school holidays configured by the student."
+    }
+  }
+}
