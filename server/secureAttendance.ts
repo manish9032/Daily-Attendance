@@ -190,7 +190,7 @@ async function verifyFaceWithGemini(jpegBase64: string): Promise<void> {
   try {
     const ai = new GoogleGenAI({ apiKey });
     const resp = await ai.models.generateContent({
-      model: process.env.GEMINI_MODEL || 'gemini-3.8-flash',
+      model: process.env.GEMINI_MODEL || 'gemini-3.5-flash-lite',
       contents: [
         {
           role: 'user',
