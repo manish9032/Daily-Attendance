@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import type { Express, Request, Response } from 'express';
-import { initializeApp, getApps, applicationDefault } from 'firebase-admin/app';
+import { initializeApp, getApps, applicationDefault, cert } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import { getFirestore, FieldValue, Firestore } from 'firebase-admin/firestore';
 import { GoogleGenAI } from '@google/genai';
@@ -50,9 +50,18 @@ function getAdmin(): { db: Firestore } {
     fs.readFileSync(path.join(process.cwd(), 'firebase-applet-config.json'), 'utf8')
   ) as { projectId: string; firestoreDatabaseId?: string };
 
+  let credential;
+  if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+    const sa = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+    sa.private_key = sa.private_key.replace(/\\n/g, '\n');
+    credential = cert(sa);
+  } else {
+    credential = applicationDefault(); 
+  }
+
   const app = getApps().length
     ? getApps()[0]
-    : initializeApp({ credential: applicationDefault(), projectId: cfg.projectId });
+    : initializeApp({ credential, projectId: cfg.projectId });
 
   cachedDb = cfg.firestoreDatabaseId
     ? getFirestore(app, cfg.firestoreDatabaseId)
